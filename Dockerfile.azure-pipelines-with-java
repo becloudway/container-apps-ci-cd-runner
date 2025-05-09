@@ -15,19 +15,26 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommend
     software-properties-common \
     openjdk-21-jdk
 
-ARG MAVEN_VERSION=3.6.3
-ARG USER_HOME_DIR="/root"
-ARG BASE_URL=https://apache.osuosl.org/maven/maven-3/${MAVEN_VERSION}/binaries
+RUN <<EOF
 
-RUN mkdir -p /usr/share/maven /usr/share/maven/ref \
- && curl -fsSL -o /tmp/apache-maven.tar.gz ${BASE_URL}/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
- && tar -xzf /tmp/apache-maven.tar.gz -C /usr/share/maven --strip-components=1 \
- && rm -f /tmp/apache-maven.tar.gz \
- && ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
+mkdir /opt/maven
 
-ENV MAVEN_HOME /usr/share/maven
+maven_version=$(curl -fsSL https://repo1.maven.org/maven2/org/apache/maven/apache-maven/maven-metadata.xml  \
+      | grep -Ev "alpha|beta" \
+      | grep -oP '(?<=version>).*(?=</version)'  \
+      | tail -n1)
+
+maven_download_url="https://repo1.maven.org/maven2/org/apache/maven/apache-maven/$maven_version/apache-maven-${maven_version}-bin.tar.gz"
+
+curl -fL $maven_download_url | tar zxv -C /opt/maven --strip-components=1
+
+EOF
+
+ENV MAVEN_HOME /opt/maven
+ENV M2_HOME /opt/maven
+ENV PATH="/opt/maven/bin:${PATH}"
+
 ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
-ENV PATH="$MAVEN_HOME/bin:$PATH"
 
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
