@@ -15,6 +15,19 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommend
     software-properties-common \
     openjdk-21-jdk
 
+ARG MAVEN_VERSION=3.9.9
+ARG MAVEN_HOME=/opt/apache-maven-${MAVEN_VERSION}
+
+RUN wget -q https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz -O /tmp/maven.tar.gz && \
+    tar -xzf /tmp/maven.tar.gz -C /opt && \
+    ln -s /opt/apache-maven-${MAVEN_VERSION} /opt/maven && \
+    rm /tmp/maven.tar.gz
+
+# Set Maven environment variables
+ENV MAVEN_HOME=/opt/maven
+ENV MAVEN_CONFIG="$HOME/.m2"
+ENV PATH="$MAVEN_HOME/bin:$PATH"
+
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
 # Can be 'linux-x64', 'linux-arm64', 'linux-arm', 'rhel.6-x64'.
